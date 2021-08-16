@@ -1,19 +1,84 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en-US">
     <head>
+        <title>Intelec Sash Programmer</title>
         <script src="src/jquery-3.6.0.min.js"></script>
         <script src="src/bootstrap.bundle.min.js"></script>
         <link rel="stylesheet" type="text/css" href="src/bootstrap.min.css">
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     </head>
- 
+
     <body>
-        <div class="jumbotron jumbotron-fluid">
-            <div class="container">
-                <h1 class="display-4">Tech Tutorials X</h1>
-                <p class="lead">Testing Bootstrap.</p>
+        <div class="p-3">
+            <div class="alert alert-primary text-center">
+                <h3>Door Data</h3>
+            </div>
+            <div class="container p-2">
+                Status: <span id="uno" class="text-success fw-bold">0</span>
+            </div>
+            <div class="container p-2">
+                String Position: <span id="str" class="text-success fw-bold"></span>
+            </div>
+            <div class="container p-2">
+                Sash: <span id="dpo" class="text-success fw-bold"></span>
+            </div>
+            <div class="container p-2">
+                Button Status: <span id="prs" class="text-success fw-bold"></span>
+            </div>
+            <div class="container p-2">
+                Drive Status: <span id="drs" class="text-success fw-bold"></span>
+            </div>
+            <div class="container p-2">
+                PIR Timer: <span id="pit" class="text-success fw-bold"></span>
+            </div>
+            <div class="container p-2">
+                Current A: <span id="cua" class="text-success fw-bold"></span> mA
+            </div>
+            <div class="container p-2">
+                Current B: <span id="cub" class="text-success fw-bold"></span> mA
+            </div>
+            <div class="container p-2">
+                PIR Input: <span id="pir" class="text-success fw-bold"></span>
+            </div>
+            <div class="container p-2">
+                AUX Input: <span id="aux" class="text-success fw-bold"></span>
+            </div>
+            <div class="container p-2">
+                Pace: <span id="pce" class="text-success fw-bold"></span>
+            </div>
+            <div class="container text-center p-2">
+                <button class="btn btn-primary" id="btn_raise">Raise Door</button>
+            </div>
+            <div class="container text-center p-2">
+                <span id="pco"></span>
+            </div>
+            <div class="container text-center pt-3">
+                <a href="eep.html" class="btn btn-info" role="button">Backup Data</a>
             </div>
         </div>
+
+        <script>
+            setInterval(getData, 1000);
+
+            function getData() {
+                let xhttp = new XMLHttpRequest();
+                xhttp.responseType = "json";
+                xhttp.onreadystatechange = function() {
+                    if (this.readyState === 4 && this.status === 200) {
+                        const val = xhttp.response;
+                        console.log(`Data: ${JSON.stringify(val)}`);
+                        Object.keys(val).forEach(function (_key) {
+                            let element = document.getElementById(_key);
+                            if (element) {
+                                element.innerHTML = val[_key];
+                            }
+                        });
+                    }
+                };
+                xhttp.open("GET", "runData", true);
+                xhttp.send();
+            }
+        </script>
+
     </body>
 </html>

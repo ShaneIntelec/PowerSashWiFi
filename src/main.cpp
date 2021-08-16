@@ -8,7 +8,6 @@
 #include "SPIFFS.h"
 
 #include <ArduinoJson.h>
-#include "index.h"
 #include "eep.h"
 #include "css.h"
 
@@ -32,11 +31,11 @@ AsyncWebServer  server(80);
 bool jamclear, pushc, piren, pirhc;
 
 //nv data variables
-int top, bot, sto, sbo, sld, jcl, smu, smd, sms, jit, prt , dsp;
+int top, bot, sto, sbo, sld, jcl, smu, smd, sms, jit, prt, dsp;
 int usp, bnt, hco, pco, loo, pho;
 
 //run mode variable
-int unl,dpo,prs, drs , pit, str, aux, pir, pce, uno, cua, cub;
+int unl, dpo, prs, drs, pit, str, aux, pir, pce, uno, cua, cub;
 
 
 void notFound(AsyncWebServerRequest *request) {
@@ -107,74 +106,6 @@ void handleBNTup() {Serial2.print("O"); handleEEP();}
 void handleJAM() {
   jamclear = (jamclear)? 0:1;
   handleEEP();
-}
-
-void handleRunData() {
-
-  String dataString = "<p>";
-
-  dataString += "<br/>Status: ";
-  switch(uno)
-  {
-    case 0:dataString += "Top Found"; break;
-    case 1:dataString += "Bottom Found"; break;
-    case 2:dataString += "Velocity Error<br/><font size=\"-1\">(Affected by Stall Max Down)</font>"; break;
-    case 3:dataString += "Photo Halt"; break;
-    case 4:dataString += "Overcurrent"; break;
-    case 5:dataString += "Raise Jammed<br/><font size=\"-1\">(Affected by Jitter,Stall Max Up)</font>"; break;
-    case 6:dataString += "PIR Halt"; break;
-    case 7:dataString += "Underspeed"; break;
-    case 8:dataString += "Photo jammed"; break;
-  }
-  dataString += "<br/>";
-
-  dataString += "<br/>String Position:" + (String)str;
-  
-  dataString += "<br/>Sash: ";
-  switch(dpo)
-  {
-    case 0:dataString += "At Top"; break;
-    case 1:dataString += "Near Top"; break;
-    case 2:dataString += "Top Half"; break;
-    case 3:dataString += "Bottom Half"; break;
-    case 4:dataString += "Near Bottom"; break;
-    case 5:dataString += "At Bottom"; break;
-    case 6:dataString += "Unknown"; break;
-  }
-//    dataString += "<br/>Program State:" + (String)prs;
-  dataString += "<br/>Button State: ";
-  switch(prs)
-  {
-    case 0:dataString += "Normal"; break;
-    case 1:dataString += "Set Bottom"; break;
-    case 2:dataString += "Set Top"; break;
-  }
-//    dataString += "<br/>Drive State:" + (String)drs;
-  dataString += "<br/>Drive State: ";
-  switch(drs)
-  {
-    case 0:dataString += "Off"; break;
-    case 4:dataString += "Free"; break;
-    case 8:dataString += "Error"; break;
-    default:dataString += "fix this"; break;
-  }
-  dataString += "<br/>PIR Timer: " + (String)pit;
-  dataString += "<br/>Current A: " + (String)cua + "mA" ;
-  dataString += "<br/>Current B: " + (String)cub + "mA" ;
-  dataString += "<br/>PIR Input: " + (String)pir;
-  dataString += "<br/>AUX Input: " + (String)aux;
-  dataString += "<br/>Pace: " + (String)pce;
-  
-  dataString += "</p>";
-
-  dataString += "<p><strong>Raise Door</strong><a href=\"/raisedoor\"><button class=\"button\">UP</button></a></p>";
-
-  if (pco)
-    dataString += "<p><strong>Lower Door</strong><a href=\"/lowerdoor\"><button class=\"button\">DOWN</button></a></p>";
-  else 
-    dataString += "<p><br>Lower Door function disabled while Push Close option disabled</p>";
-
-  server.send(200, "text/plain", dataString);
 }
 
 void handleEEPData() {
@@ -308,36 +239,85 @@ void setup(void){
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/index.html", "text/html");
   });
+  server.on("/index.html", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/index.html", "text/html");
+  });
+  server.on("/eep.html", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/eep.html", "text/html");
+  });
   server.on("/src/bootstrap.bundle.min.js", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/src/bootstrap.bundle.min.js", "text/javascript");
   });
   
   server.on("/src/jquery-3.6.0.min.js", HTTP_GET, [](AsyncWebServerRequest *request){
-      request->send(SPIFFS, "/src/jquery-3.6.0.min.js", "text/javascript");
+    request->send(SPIFFS, "/src/jquery-3.6.0.min.js", "text/javascript");
   });
   
   server.on("/src/bootstrap.min.css", HTTP_GET, [](AsyncWebServerRequest *request){
-      request->send(SPIFFS, "/src/bootstrap.min.css", "text/css");
+    request->send(SPIFFS, "/src/bootstrap.min.css", "text/css");
   });
 
-  // server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-  //   request->send_P(200, "text/html", MAIN_page);
-  // });
-  // server.on("/eep", HTTP_GET, [](AsyncWebServerRequest *request){
-  //   request->send_P(200, "text/html", EEP_page);
-  // });
-  // server.on("/style2.css", HTTP_GET, [](AsyncWebServerRequest *request){
-  //   request->send_P(200, "text/html", CSS_page);
-  // });
+  server.on("/runData", HTTP_GET, [](AsyncWebServerRequest *request){
+    AsyncResponseStream *response = request->beginResponseStream("application/json");
+    DynamicJsonDocument doc(1024);
+    JsonObject root = doc.to<JsonObject>();
+    
+    switch(uno) {
+      case 0: root["uno"] = "Top Found"; break;
+      case 1: root["uno"] = "Bottom Found"; break;
+      case 2: root["uno"] = "Velocity Error<br/><font size=\"-1\">(Affected by Stall Max Down)</font>"; break;
+      case 3: root["uno"] = "Photo Halt"; break;
+      case 4: root["uno"] = "Overcurrent"; break;
+      case 5: root["uno"] = "Raise Jammed<br/><font size=\"-1\">(Affected by Jitter,Stall Max Up)</font>"; break;
+      case 6: root["uno"] = "PIR Halt"; break;
+      case 7: root["uno"] = "Underspeed"; break;
+      case 8: root["uno"] = "Photo jammed"; break;
+    }
+    
+    root["str"] = str;
+    
+    switch(dpo) {
+      case 0: root["dpo"] = "At Top"; break;
+      case 1: root["dpo"] = "Near Top"; break;
+      case 2: root["dpo"] = "Top Half"; break;
+      case 3: root["dpo"] = "Bottom Half"; break;
+      case 4: root["dpo"] = "Near Bottom"; break;
+      case 5: root["dpo"] = "At Bottom"; break;
+      case 6: root["dpo"] = "Unknown"; break;
+    }
+  
+    switch(prs) {
+      case 0: root["prs"] = "Normal"; break;
+      case 1: root["prs"] = "Set Bottom"; break;
+      case 2: root["prs"] = "Set Top"; break;
+    }
 
+    switch(drs) {
+      case 0: root["drs"] = "Off"; break;
+      case 4: root["drs"] = "Free"; break;
+      case 8: root["drs"] = "Error"; break;
+      default: root["drs"] = "Fix this"; break;
+    }
+    root["pit"] = pit;
+    root["cua"] = cua;
+    root["cub"] = cub;
+    root["pir"] = pir;
+    root["aux"] = aux;
+    root["pce"] = pce;
+    if (pco)
+      root["pco"] = "<button class=\"btn btn-primary\">Lower Door</button>";
+    else 
+      root["pco"] = "<span class=\"alert alert-warning\">Lower Door Function Disabled</span>";
+
+    serializeJson(root, *response);
+    request->send(response);
+  });
+  
   // server.on("/submit", HTTP_POST, [](AsyncWebServerRequest *request){
   //   String message;
   //   message = request->getParam(PARAM_MESSAGE, true)->value();
   //   request->send(200, "text/plain", "Hello, POST: " + message);
   // });
-
-  // server.on("/runData", handleRunData);   // To get update of run data only 
-  // server.on("/eepData", handleEEPData);     // To get update of run data only
 
   // server.on("/pirtoggle", handlePIR) ;
   // server.on("/pco", handlePCO) ;
@@ -387,8 +367,7 @@ void loop(void){
 
     if (error) {
     #ifdef DEBUGNONJSONDATA
-      Serial.print("NJ=");
-      Serial.println(rawDoorData);
+      Serial.print("NJ="); Serial.println(rawDoorData);
       #endif
 //      Serial.print(F("deserializeJson() failed: "));
 //      Serial.println(error.f_str());
@@ -397,8 +376,7 @@ void loop(void){
     
     if (doc["type"] == 1) {
       #ifdef DEBUGJSONDATA
-      Serial.print("RD=");
-      Serial.println(rawDoorData);
+      Serial.print("RD="); Serial.println(rawDoorData);
       #endif
       
       unl = doc["unl"];
@@ -416,8 +394,7 @@ void loop(void){
     }
     else if (doc["type"] == 2) {
       #ifdef DEBUGJSONDATA
-      Serial.print("EE=");
-      Serial.println(rawDoorData);
+      Serial.print("EE="); Serial.println(rawDoorData);
       #endif
       
       top = doc["top"];
