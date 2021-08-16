@@ -17,7 +17,7 @@ h1 {
   padding: 2vh;
 }
 p {
-  font-size: 2rem;
+  font-size: 1.5rem;
 }
 #para1 {
   font-size: 2rem;
