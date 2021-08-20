@@ -231,47 +231,21 @@ void setup(void){
     request->send(200, "text/plain", "OK");
   });
 
-  server.onRequestBody([](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
-    if ((request->url() == "/submit") && (request->method() == HTTP_POST)) {
-      if (DeserializationError::Ok == deserializeJson(submitted_data, (const char*)data)){
+  server.on("/submit", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
+    if (DeserializationError::Ok == deserializeJson(submitted_data, (const char*)data)){
         update_data = true;
       }
       request->send(200, "text/plain", "OK");
-    }
   });
 
-  // server.on("/smdup", handleSmdup) ;
-  // server.on("/smddn", handleSmddn) ;
-  // server.on("/smudn", handleSmudn);
-  // server.on("/smuup", handleSmuup);
-  // server.on("/jcldn", handleJCLdn);
-  // server.on("/jclup", handleJCLup);
-  // server.on("/uspdn", handleUSPdn);
-  // server.on("/uspup", handleUSPup);
-  // server.on("/dspdn", handleDSPdn);
-  // server.on("/dspup", handleDSPup);
-  // server.on("/stodn", handleSTOdn);
-  // server.on("/stoup", handleSTOup);
-  // server.on("/sbodn", handleSBOdn);
-  // server.on("/sboup", handleSBOup);
-  // server.on("/slddn", handleSLDdn);
-  // server.on("/sldup", handleSLDup);
-  // server.on("/smsdn", handleSMSdn);
-  // server.on("/smsup", handleSMSup);
-  // server.on("/jitdn", handleJITdn);
-  // server.on("/jitup", handleJITup);
-  // server.on("/prtdn", handlePRTdn);
-  // server.on("/prtup", handlePRTup);
-  // server.on("/bntdn", handleBNTdn);
-  // server.on("/bntup", handleBNTup);
- 
   server.onNotFound(notFound);
   server.begin();
   Serial.println("Server started");
 }
 
 
-void handle_param(int16_t cur_val, int16_t new_val, String down_val, String up_val){
+void handle_param(String name, int16_t cur_val, int16_t new_val, String down_val, String up_val){
+  Serial.printf("Updating %s from %d to %d, UP val: %s, DOWN val: %s\n", name, cur_val, new_val, up_val, down_val);
   if (cur_val > new_val){
     for (uint16_t i = 0; i < cur_val - new_val; i++){
       Serial2.print(down_val);
@@ -291,19 +265,20 @@ void loop(void){
   String rawDoorData;
 
   if (update_data){
+    Serial.println(F("Updating data from webpage..."));
     update_data = false;
-    handle_param(usp, submitted_data["usp"], "u", "U");
-    handle_param(usp, submitted_data["dsp"], "d", "D");
-    handle_param(usp, submitted_data["sto"], "t", "T");
-    handle_param(usp, submitted_data["sbo"], "b", "B");
-    handle_param(usp, submitted_data["sld"], "x", "X");
-    handle_param(usp, submitted_data["jcl"], "c", "C");
-    handle_param(usp, submitted_data["smu"], "z", "Z");
-    handle_param(usp, submitted_data["smd"], "s", "S");
-    handle_param(usp, submitted_data["sms"], "m", "m");
-    handle_param(usp, submitted_data["jit"], "j", "J");
-    handle_param(usp, submitted_data["prt"], "p", "P");
-    handle_param(usp, submitted_data["bnt"], "o", "O");
+    handle_param("usp", usp, submitted_data["usp"], "u", "U");
+    handle_param("dsp", dsp, submitted_data["dsp"], "d", "D");
+    handle_param("sto", sto, submitted_data["sto"], "t", "T");
+    handle_param("sbo", sbo, submitted_data["sbo"], "b", "B");
+    handle_param("sld", sld, submitted_data["sld"], "x", "X");
+    handle_param("jcl", jcl, submitted_data["jcl"], "c", "C");
+    handle_param("smu", smu, submitted_data["smu"], "z", "Z");
+    handle_param("smd", smd, submitted_data["smd"], "s", "S");
+    handle_param("sms", sms, submitted_data["sms"], "m", "m");
+    handle_param("jit", jit, submitted_data["jit"], "j", "J");
+    handle_param("prt", prt, submitted_data["prt"], "p", "P");
+    handle_param("bnt", bnt, submitted_data["bnt"], "o", "O");
   }
 
   while (Serial2.available()) {

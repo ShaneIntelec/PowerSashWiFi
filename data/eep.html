@@ -6,9 +6,74 @@
         <script src="src/bootstrap.bundle.min.js"></script>
         <link rel="stylesheet" type="text/css" href="src/bootstrap.min.css">
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <script>
+            let en_update = true;
+
+            function getData() {
+                if (!en_update){
+                    en_update = true;
+                    setTimeout(getData, 10000);
+                    return
+                }
+
+                let xhttp = new XMLHttpRequest();
+                xhttp.responseType = "json";
+                xhttp.onreadystatechange = function() {
+                    if (this.readyState === 4 && this.status === 200) {
+                        const val = xhttp.response;
+                        console.log(`Data: ${JSON.stringify(val)}`);
+                        Object.keys(val).forEach(function (_key) {
+                            let element = document.getElementById(_key);
+                            if (element.tagName === "SPAN") {
+                                element.innerHTML = val[_key];
+                            } else {
+                                element.value = val[_key];
+                            }
+                        });
+                    }
+                };
+                xhttp.open("GET", "eepData", true);
+                xhttp.send();
+
+                setTimeout(getData, 1000);
+            }
+
+            function set_param(param){
+                let xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function() {
+                    if (this.readyState === 4 && this.status === 200) {
+                        getData();
+                    }
+                };
+                xhttp.open("GET", "/set?param=" + param, true);
+                xhttp.send();
+            }
+
+            function btn_submit(){
+                let xhr = new XMLHttpRequest();
+                xhr.open("POST", "/submit", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        getData();
+                    }
+                };
+                let data = {};
+                const keys = ["usp", "dsp", "sto", "sbo", "sld", "jcl", "smu", "smd", "sms", "jit", "prt", "bnt"];
+                keys.forEach(function (k, index) {
+                    const val = document.getElementById(k).value
+                    data[k] = val.length > 0 ? parseInt(val) : 0;
+                });
+                xhr.send(JSON.stringify(data));
+            }
+
+            function disable_update(){
+                en_update = false;
+            }
+        </script>
     </head>
 
-    <body>
+    <body onload="getData()">
         <div class="p-3">
             <div class="alert alert-primary text-center">
                 <h3>Saved Data</h3>
@@ -49,56 +114,56 @@
             </div>
             <div class="input-group mb-3 p-2">
                 <span class="input-group-text">Up Speed:</span>
-                <input id="usp" type="number" class="form-control" step="1">
+                <input id="usp" type="number" class="form-control" step="1" onkeypress="disable_update()">
                 <span class="input-group-text">mS/Step</span>
             </div>
             <div class="input-group mb-3 p-2">
                 <span class="input-group-text">Down Speed:</span>
-                <input id="dsp" type="number" class="form-control" step="1">
+                <input id="dsp" type="number" class="form-control" step="1" onkeypress="disable_update()">
                 <span class="input-group-text">mS/Step</span>
             </div>
             <div class="input-group mb-3 p-2">
                 <span class="input-group-text">Spring Top:</span>
-                <input id="sto" type="number" class="form-control" step="1">
+                <input id="sto" type="number" class="form-control" step="1" onkeypress="disable_update()">
             </div>
             <div class="input-group mb-3 p-2">
                 <span class="input-group-text">Spring Bottom:</span>
-                <input id="sbo" type="number" class="form-control" step="1">
+                <input id="sbo" type="number" class="form-control" step="1" onkeypress="disable_update()">
             </div>
             <div class="input-group mb-3 p-2">
                 <span class="input-group-text">Slack Down:</span>
-                <input id="sld" type="number" class="form-control" step="1">
+                <input id="sld" type="number" class="form-control" step="1" onkeypress="disable_update()">
             </div>
             <div class="input-group mb-3 p-2">
                 <span class="input-group-text">Jam Clear:</span>
-                <input id="jcl" type="number" class="form-control" step="1">
+                <input id="jcl" type="number" class="form-control" step="1" onkeypress="disable_update()">
             </div>
             <div class="input-group mb-3 p-2">
                 <span class="input-group-text">Min Speed Up:</span>
-                <input id="smu" type="number" class="form-control" step="1">
+                <input id="smu" type="number" class="form-control" step="1" onkeypress="disable_update()">
             </div>
             <div class="input-group mb-3 p-2">
                 <span class="input-group-text">Down Timeout:</span>
-                <input id="smd" type="number" class="form-control" step="1">
+                <input id="smd" type="number" class="form-control" step="1" onkeypress="disable_update()">
                 <span class="input-group-text">Timed:</span>
                 <input id="pce" type="number" class="form-control" step="1">
             </div>
             <div class="input-group mb-3 p-2">
                 <span class="input-group-text">Move Sense:</span>
-                <input id="sms" type="number" class="form-control" step="1">
+                <input id="sms" type="number" class="form-control" step="1" onkeypress="disable_update()">
             </div>
             <div class="input-group mb-3 p-2">
                 <span class="input-group-text">Lift Ignore:</span>
-                <input id="jit" type="number" class="form-control" step="1">
+                <input id="jit" type="number" class="form-control" step="1" onkeypress="disable_update()">
             </div>
             <div class="input-group mb-3 p-2">
                 <span class="input-group-text">PIR Timeout:</span>
-                <input id="prt" type="number" class="form-control" step="1">
+                <input id="prt" type="number" class="form-control" step="1" onkeypress="disable_update()">
                 <span class="input-group-text">seconds</span>
             </div>
             <div class="input-group mb-3 p-2">
                 <span class="input-group-text">Bounce Time:</span>
-                <input id="bnt" type="number" class="form-control" step="1">
+                <input id="bnt" type="number" class="form-control" step="1" onkeypress="disable_update()">
                 <span class="input-group-text">mS</span>
             </div>
             <div class="container p-2">
@@ -118,60 +183,8 @@
             </div>
 
             <div class="container text-center">
-                <a href="index.html" class="btn btn-info" role="button">Runtime Data</a>
+                <a href="index.html" class="btn btn-info" role="button"><-- Runtime Data</a>
             </div>
         </div>
-        <script>
-            setInterval(getData, 1000);
-
-            function getData() {
-                let xhttp = new XMLHttpRequest();
-                xhttp.responseType = "json";
-                xhttp.onreadystatechange = function() {
-                    if (this.readyState === 4 && this.status === 200) {
-                        const val = xhttp.response;
-                        console.log(`Data: ${JSON.stringify(val)}`);
-                        Object.keys(val).forEach(function (_key) {
-                            let element = document.getElementById(_key);
-                            if (element.tagName == "span") {
-                                element.innerHTML = val[_key];
-                            } else {
-                                element.value = val[_key];
-                            }
-                        });
-                    }
-                };
-                xhttp.open("GET", "eepData", true);
-                xhttp.send();
-            }
-
-            function set_param(param){
-                let xhttp = new XMLHttpRequest();
-                xhttp.onreadystatechange = function() {
-                    if (this.readyState === 4 && this.status === 200) {
-                        getData();
-                    }
-                };
-                xhttp.open("GET", "/set?param=" + param, true);
-                xhttp.send();
-            }
-
-            function btn_submit(){
-                let xhr = new XMLHttpRequest();
-                xhr.open("POST", "/submit", true);
-                xhr.setRequestHeader("Content-Type", "application/json");
-                xhr.onreadystatechange = function () {
-                    if (xhr.readyState === 4 && xhr.status === 200) {
-                        getData();
-                    }
-                };
-                let data = {};
-                const keys = ["usp", "dsp", "sto", "sbo", "sld", "jcl", "smu", "smd", "sms", "jit", "prt", "bnt"];
-                keys.forEach(function (k, index) {
-                    data[k] = document.getElementById(k).value;
-                });
-                xhr.send(JSON.stringify(data));
-            }
-        </script>
     </body>
 </html>
