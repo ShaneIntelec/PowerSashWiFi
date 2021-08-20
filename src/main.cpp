@@ -8,8 +8,6 @@
 #include "SPIFFS.h"
 
 #include <ArduinoJson.h>
-#include "eep.h"
-#include "css.h"
 
 
 //RX input from door with 3.3k and 1.8k divider on gpio17
@@ -26,9 +24,7 @@ const char* password = "";
 //#define DEBUGJSONDATA
 #define DEBUGNONJSONDATA
 
-AsyncWebServer  server(80);
-
-bool jamclear, pushc, piren, pirhc;
+AsyncWebServer server(80);
 
 //nv data variables
 int top, bot, sto, sbo, sld, jcl, smu, smd, sms, jit, prt, dsp;
@@ -37,178 +33,15 @@ int usp, bnt, hco, pco, loo, pho;
 //run mode variable
 int unl, dpo, prs, drs, pit, str, aux, pir, pce, uno, cua, cub;
 
+StaticJsonDocument<500> door_data;
+StaticJsonDocument<500> submitted_data;
+bool update_data = false;
+
 
 void notFound(AsyncWebServerRequest *request) {
   request->send(404, "text/plain", "Not found");
 }
 
-/* 
-void handlePIR() {
-//  pho = (pho)? 0:1;
-  Serial2.print("r"); //nv_photoHalt
-  handleEEP();
-}
-
-void handlePCO() {
-  Serial2.print("y");  //nv_pushCloseOption
-  handleEEP();
-}
-
-void handleLOO() {
-  Serial2.print("l");  //nv_liftOpenOption
-  handleEEP();
-}
-
-void handleHCO() {
-//  Serial2.print("!!!");   //toggle nv_pirHaltCloseOption
-//  delay(100);
-  Serial2.print("a");   //toggle nv_pirHaltCloseOption
-  handleEEP();
-}
-
-void handleRaise() {
-  Serial2.print(">");
-  handleEEP();
-//  handleRoot();
-}
-
-void handleLower() {
-  Serial2.print("<");
-  handleEEP();
-//  handleRoot();
-}
-
-void handleSmddn() {Serial2.print("S"); handleEEP();}
-void handleSmdup() {Serial2.print("s"); handleEEP();}
-void handleSmudn() {Serial2.print("z"); handleEEP();}
-void handleSmuup() {Serial2.print("Z"); handleEEP();}
-void handleJCLdn() {Serial2.print("c"); handleEEP();}
-void handleJCLup() {Serial2.print("C"); handleEEP();}
-void handleUSPdn() {Serial2.print("u"); handleEEP();}
-void handleUSPup() {Serial2.print("U"); handleEEP();}
-void handleDSPdn() {Serial2.print("d"); handleEEP();}
-void handleDSPup() {Serial2.print("D"); handleEEP();}
-void handleSTOdn() {Serial2.print("t"); handleEEP();}
-void handleSTOup() {Serial2.print("T"); handleEEP();}
-void handleSBOdn() {Serial2.print("b"); handleEEP();}
-void handleSBOup() {Serial2.print("B"); handleEEP();}
-void handleSLDdn() {Serial2.print("x"); handleEEP();}
-void handleSLDup() {Serial2.print("X"); handleEEP();}
-void handleSMSdn() {Serial2.print("m"); handleEEP();}
-void handleSMSup() {Serial2.print("M"); handleEEP();}
-void handleJITdn() {Serial2.print("j"); handleEEP();}
-void handleJITup() {Serial2.print("J"); handleEEP();}
-void handlePRTdn() {Serial2.print("p"); handleEEP();}
-void handlePRTup() {Serial2.print("P"); handleEEP();}
-void handleBNTdn() {Serial2.print("o"); handleEEP();}
-void handleBNTup() {Serial2.print("O"); handleEEP();}
-
-void handleJAM() {
-  jamclear = (jamclear)? 0:1;
-  handleEEP();
-}
-
-void handleEEPData() {
-
-  String eepString = "<table>";
-  eepString += "<tr><td>" + (String)top + "</td></tr>";
-  eepString += "<tr><td>" + (String)bot + "</td></tr>";
-  eepString += "<tr><td>" + (String)str + "</td></tr>";
-
-  eepString += "<tr><td>";
-  switch(dpo)
-  {
-    case 0:eepString += "At Top"; break;
-    case 1:eepString += "Near Top"; break;
-    case 2:eepString += "Top Half"; break;
-    case 3:eepString += "Bottom Half"; break;
-    case 4:eepString += "Near Bottom"; break;
-    case 5:eepString += "At Bottom"; break;
-    case 6:eepString += "Unknown"; break;
-  }
-  eepString += "</tr></td>";
-
-  eepString += "<tr><td>";
-  switch(uno)
-  {
-    case 0:eepString += "Top Found"; break;
-    case 1:eepString += "Bottom Found"; break;
-    case 2:eepString += "Velocity Error<br/><font size=\"-1\">(Adjust Down Timing)</font>"; break;
-    case 3:eepString += "Beam Sensor Halt"; break;
-    case 4:eepString += "Overcurrent Detected"; break;
-    case 5:eepString += "Raise Jammed<br/><font size=\"-1\">(Adjust Min Up Speed)</font>"; break;
-    case 6:eepString += "PIR Halt"; break;
-    case 7:eepString += "Underspeed"; break;
-    case 8:eepString += "Beam Sensor Covered"; break;
-  }
-  eepString += "</tr></td>";
-
-  eepString += "<tr><td>";
-  switch(prs)
-  {
-    case 0:eepString += "Normal"; break;
-    case 1:eepString += "Set Bottom"; break;
-    case 2:eepString += "Set Top"; break;
-  }
-  eepString += "</tr></td>";
-  
-  
-  if (pir) eepString += "<tr><td><div class=\"led-green\"></div></td></tr>";
-  else eepString += "<tr><td></td></tr>";
-
-  if (aux) eepString += "<tr><td><div class=\"led-green\"></div></td></tr>";
-  else eepString += "<tr><td></td></tr>";
-
-  if (unl) eepString += "<tr><td><div class=\"led-green\"></div></td></tr>";
-  else eepString += "<tr><td></td></tr>";
-  
-  eepString += "<tr><td>" + (String)pit + "</td></tr>";
-  eepString += "<tr><td>" + (String)usp + "<font size=\"-1\"> mS/Step</font></td></tr>";
-  eepString += "<tr><td>" + (String)dsp + "<font size=\"-1\"> mS/Step</font></td></tr>";
-  eepString += "<tr><td>" + (String)sto + "</td></tr>";
-  eepString += "<tr><td>" + (String)sbo + "</td></tr>";
-  eepString += "<tr><td>" + (String)sld + "</td></tr>";
-//    eepString += "<tr><td>" + (String)jcl + "</td></tr>";
-  eepString += "<tr><td>" + (String)jcl + "<font size=\"-1\"> Steps</font></td></tr>";
-  
-  eepString += "<tr><td>" + (String)smu + "</td></tr>";
-  eepString += "<tr><td>" + (String)smd + "<font size=\"-1\">Timed:" + (String)(pce/20) + "</font></td></tr>";
-  
-  eepString += "<tr><td>" + (String)sms + "<font size=\"-1\"> (String)</font></td></tr>";
-  eepString += "<tr><td>" + (String)jit + "<font size=\"-1\"> (String)</font></td></tr>";
-  eepString += "<tr><td>" + (String)prt + "<font size=\"-1\"> Seconds</font></td></tr>";
-  eepString += "<tr><td>" + (String)(bnt*50) + "<font size=\"-1\"> mS</font></td></tr>";
-  
-  eepString += "<tr><td><a href=\"/pirtoggle\"><button class=\"button\">";
-  if (pho) eepString += "Enabled";
-  else eepString += "Disabled";
-  eepString += "</button></a></td></tr>";
-
-  eepString += "<tr><td><a href=\"/hco\"><button class=\"button\">";
-  if (hco) eepString += "Enabled";
-  else eepString += "Disabled";
-  eepString += "</button></a></td></tr>";
-  
-  eepString += "<tr><td><a href=\"/pco\"><button class=\"button\">";
-  if (pco) eepString += "Enabled";
-  else eepString += "Disabled";
-  eepString += "</button></a></td></tr></table>";
-
-  eepString += "<tr><td><a href=\"/loo\"><button class=\"button\">";
-  if (loo) eepString += "Enabled";
-  else eepString += "Disabled";
-  eepString += "</button></a></td></tr></table>";
-  
-  server.send(200, "text/plain", eepString);
-//    handleCSS();
-
-  if (unl == 0) {
-    Serial2.print("!!!");  // auto unlock
-  }
-
-}
-
-*/
 
 void setup(void){
 
@@ -218,7 +51,7 @@ void setup(void){
   if(!SPIFFS.begin(true)){
      Serial.println("An Error has occurred while mounting SPIFFS");
      return;
-}
+  }
 
   Serial.begin(115200);
   Serial2.begin(115200, SERIAL_8N1, RXDOOR, TXDOOR);
@@ -312,19 +145,101 @@ void setup(void){
     serializeJson(root, *response);
     request->send(response);
   });
-  
-  // server.on("/submit", HTTP_POST, [](AsyncWebServerRequest *request){
-  //   String message;
-  //   message = request->getParam(PARAM_MESSAGE, true)->value();
-  //   request->send(200, "text/plain", "Hello, POST: " + message);
-  // });
 
-  // server.on("/pirtoggle", handlePIR) ;
-  // server.on("/pco", handlePCO) ;
-  // server.on("/loo", handleLOO) ;
-  // server.on("/hco", handleHCO) ;
-  // server.on("/raisedoor", handleRaise) ;
-  // server.on("/lowerdoor", handleLower) ;
+  server.on("/eepData", HTTP_GET, [](AsyncWebServerRequest *request){
+    AsyncResponseStream *response = request->beginResponseStream("application/json");
+    DynamicJsonDocument doc(1024);
+    JsonObject root = doc.to<JsonObject>();
+    
+    root["top"] = top;
+    root["bot"] = bot;
+    root["str"] = str;
+    
+    switch(uno) {
+      case 0: root["uno"] = "Top Found"; break;
+      case 1: root["uno"] = "Bottom Found"; break;
+      case 2: root["uno"] = "Velocity Error<br/><font size=\"-1\">(Affected by Stall Max Down)</font>"; break;
+      case 3: root["uno"] = "Photo Halt"; break;
+      case 4: root["uno"] = "Overcurrent"; break;
+      case 5: root["uno"] = "Raise Jammed<br/><font size=\"-1\">(Affected by Jitter,Stall Max Up)</font>"; break;
+      case 6: root["uno"] = "PIR Halt"; break;
+      case 7: root["uno"] = "Underspeed"; break;
+      case 8: root["uno"] = "Photo jammed"; break;
+    }
+
+    switch(dpo) {
+      case 0: root["dpo"] = "At Top"; break;
+      case 1: root["dpo"] = "Near Top"; break;
+      case 2: root["dpo"] = "Top Half"; break;
+      case 3: root["dpo"] = "Bottom Half"; break;
+      case 4: root["dpo"] = "Near Bottom"; break;
+      case 5: root["dpo"] = "At Bottom"; break;
+      case 6: root["dpo"] = "Unknown"; break;
+    }
+  
+    switch(prs) {
+      case 0: root["prs"] = "Normal"; break;
+      case 1: root["prs"] = "Set Bottom"; break;
+      case 2: root["prs"] = "Set Top"; break;
+    }
+
+    root["pir"] = pir ? "<i class=\"fa fa-tag text-success\"></i>" : "";
+    root["aux"] = aux ? "<i class=\"fa fa-tag text-success\"></i>" : "";
+    root["unl"] = unl ? "<i class=\"fa fa-tag text-success\"></i>" : "";
+
+    root["pit"] = pit;
+    root["usp"] = usp;
+    root["dsp"] = dsp;
+    root["sto"] = sto;
+    root["sbo"] = sbo;
+    root["sld"] = sld;
+    root["jcl"] = jcl;
+    root["smu"] = smu;
+    root["smd"] = smd;
+    root["pce"] = pce / 20;
+    root["sms"] = sms;
+    root["jit"] = jit;
+    root["prt"] = prt;
+    root["bnt"] = bnt * 50;
+    root["pho"] = pho ? "Enabled": "Disabled";
+    root["hco"] = hco ? "Enabled": "Disabled";
+    root["pco"] = pco ? "Enabled": "Disabled";
+    root["loo"] = loo ? "Enabled": "Disabled";
+    serializeJson(root, *response);
+    request->send(response);
+    if (unl == 0) {
+      Serial2.print("!!!");  // auto unlock
+    }
+  });
+
+  server.on("/set", HTTP_GET, [](AsyncWebServerRequest *request){
+    String p = request->arg("param");
+    Serial.print(F("Received `set` request, param: ")); Serial.println(p);
+    if (p == "pirtoggle"){
+      Serial2.print("r");   // nv_photoHalt
+    } else if (p == "hco") {
+      Serial2.print("a");   // nv_pirHaltCloseOption
+    } else if (p == "pco") {
+      Serial2.print("y");   // nv_pushCloseOption
+    } else if (p == "loo") {
+      Serial2.print("l");   // nv_liftOpenOption
+    } else if (p == "raise") {
+      Serial2.print(">");
+    } else if (p == "lower") {
+      Serial2.print("<");
+    }
+    request->send(200, "text/plain", "OK");
+  });
+
+  server.onRequestBody([](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
+    if ((request->url() == "/submit") && (request->method() == HTTP_POST)) {
+      if (DeserializationError::Ok == deserializeJson(submitted_data, (const char*)data)){
+        update_data = true;
+      }
+      request->send(200, "text/plain", "OK");
+    }
+  });
+
   // server.on("/smdup", handleSmdup) ;
   // server.on("/smddn", handleSmddn) ;
   // server.on("/smudn", handleSmudn);
@@ -356,65 +271,93 @@ void setup(void){
 }
 
 
-StaticJsonDocument<500> doc;
-String rawDoorData;
+void handle_param(int16_t cur_val, int16_t new_val, String down_val, String up_val){
+  if (cur_val > new_val){
+    for (uint16_t i = 0; i < cur_val - new_val; i++){
+      Serial2.print(down_val);
+      delay(5);
+    }
+  } else if (cur_val < new_val){
+    for (uint16_t i = 0; i < new_val - cur_val; i++){
+      Serial2.print(down_val);
+      delay(5);
+    }
+  }
+}
+
 
 void loop(void){
 
+  String rawDoorData;
+
+  if (update_data){
+    update_data = false;
+    handle_param(usp, submitted_data["usp"], "u", "U");
+    handle_param(usp, submitted_data["dsp"], "d", "D");
+    handle_param(usp, submitted_data["sto"], "t", "T");
+    handle_param(usp, submitted_data["sbo"], "b", "B");
+    handle_param(usp, submitted_data["sld"], "x", "X");
+    handle_param(usp, submitted_data["jcl"], "c", "C");
+    handle_param(usp, submitted_data["smu"], "z", "Z");
+    handle_param(usp, submitted_data["smd"], "s", "S");
+    handle_param(usp, submitted_data["sms"], "m", "m");
+    handle_param(usp, submitted_data["jit"], "j", "J");
+    handle_param(usp, submitted_data["prt"], "p", "P");
+    handle_param(usp, submitted_data["bnt"], "o", "O");
+  }
+
   while (Serial2.available()) {
     rawDoorData = Serial2.readString();
-    DeserializationError error = deserializeJson(doc, rawDoorData);
+    DeserializationError error = deserializeJson(door_data, rawDoorData);
 
     if (error) {
-    #ifdef DEBUGNONJSONDATA
+#ifdef DEBUGNONJSONDATA
+      Serial.print(F("deserializeJson() failed: "));  Serial.println(error.f_str());
       Serial.print("NJ="); Serial.println(rawDoorData);
-      #endif
-//      Serial.print(F("deserializeJson() failed: "));
-//      Serial.println(error.f_str());
-      return;
+#endif
+      break;
     }
     
-    if (doc["type"] == 1) {
+    if (door_data["type"] == 1) {
       #ifdef DEBUGJSONDATA
       Serial.print("RD="); Serial.println(rawDoorData);
       #endif
       
-      unl = doc["unl"];
-      dpo = doc["dpo"];
-      prs = doc["prs"];
-      drs = doc["drs"];
-      pit = doc["pit"];
-      str = doc["str"];
-      aux = doc["aux"];
-      pir = doc["pir"];
-      pce = doc["pce"];
-      uno = doc["uno"];
-      cua = doc["cua"];
-      cub = doc["cub"];
-    }
-    else if (doc["type"] == 2) {
+      unl = door_data["unl"];
+      dpo = door_data["dpo"];
+      prs = door_data["prs"];
+      drs = door_data["drs"];
+      pit = door_data["pit"];
+      str = door_data["str"];
+      aux = door_data["aux"];
+      pir = door_data["pir"];
+      pce = door_data["pce"];
+      uno = door_data["uno"];
+      cua = door_data["cua"];
+      cub = door_data["cub"];
+    } else if (door_data["type"] == 2) {
       #ifdef DEBUGJSONDATA
       Serial.print("EE="); Serial.println(rawDoorData);
       #endif
       
-      top = doc["top"];
-      bot = doc["bot"];
-      sto = doc["sto"]; // 20
-      sbo = doc["sbo"]; // 20
-      sld = doc["sld"]; // 10
-      jcl = doc["jcl"]; // 200
-      smu = doc["smu"]; // 2
-      smd = doc["smd"]; // 47
-      sms = doc["sms"]; // 2
-      jit = doc["jit"]; // 0
-      prt = doc["prt"]; // 60
-      dsp = doc["dsp"]; // 10
-      usp = doc["usp"]; // 10
-      bnt = doc["bnt"]; // 10
-      hco = doc["hco"]; // 0
-      pco = doc["pco"]; // 0
-      loo = doc["loo"]; // 0
-      pho = doc["pho"]; // 0
+      top = door_data["top"];
+      bot = door_data["bot"];
+      sto = door_data["sto"]; // 20
+      sbo = door_data["sbo"]; // 20
+      sld = door_data["sld"]; // 10
+      jcl = door_data["jcl"]; // 200
+      smu = door_data["smu"]; // 2
+      smd = door_data["smd"]; // 47
+      sms = door_data["sms"]; // 2
+      jit = door_data["jit"]; // 0
+      prt = door_data["prt"]; // 60
+      dsp = door_data["dsp"]; // 10
+      usp = door_data["usp"]; // 10
+      bnt = door_data["bnt"]; // 10
+      hco = door_data["hco"]; // 0
+      pco = door_data["pco"]; // 0
+      loo = door_data["loo"]; // 0
+      pho = door_data["pho"]; // 0
     }
   }
   delay(1);

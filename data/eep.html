@@ -13,12 +13,165 @@
             <div class="alert alert-primary text-center">
                 <h3>Saved Data</h3>
             </div>
-            <div class="container">
-
+            <div class="alert alert-info text-center">
+                <button class="btn btn-primary" type="button" onclick="set_param('raise')">Raise Sash</button>
+                <button class="btn btn-primary" type="button" onclick="set_param('lower')">Lower Sash</button>
             </div>
+            <div class="container p-2">
+                Sash Top: <span id="top" class="text-success fw-bold"></span>
+            </div>
+            <div class="container p-2">
+                Sash Bottom: <span id="bot" class="text-success fw-bold"></span>
+            </div>
+            <div class="container p-2">
+                Current Position: <span id="str" class="text-success fw-bold"></span>
+            </div>
+            <div class="container p-2">
+                Sash: <span id="dpo" class="text-success fw-bold"></span>
+            </div>
+            <div class="container p-2">
+                Status: <span id="uno" class="text-success fw-bold"></span>
+            </div>
+            <div class="container p-2">
+                Program Mode: <span id="prs" class="text-success fw-bold"></span>
+            </div>
+            <div class="container p-2">
+                PIR Input: <span id="pir" class="text-success fw-bold"></span>
+            </div>
+            <div class="container p-2">
+                Beam Input: <span id="aux" class="text-success fw-bold"></span>
+            </div>
+            <div class="container p-2">
+                Connected: <span id="unl" class="text-success fw-bold"></span>
+            </div>
+            <div class="container p-2">
+                PIR Timer: <span id="pit" class="text-success fw-bold"></span>
+            </div>
+            <div class="input-group mb-3 p-2">
+                <span class="input-group-text">Up Speed:</span>
+                <input id="usp" type="number" class="form-control" step="1">
+                <span class="input-group-text">mS/Step</span>
+            </div>
+            <div class="input-group mb-3 p-2">
+                <span class="input-group-text">Down Speed:</span>
+                <input id="dsp" type="number" class="form-control" step="1">
+                <span class="input-group-text">mS/Step</span>
+            </div>
+            <div class="input-group mb-3 p-2">
+                <span class="input-group-text">Spring Top:</span>
+                <input id="sto" type="number" class="form-control" step="1">
+            </div>
+            <div class="input-group mb-3 p-2">
+                <span class="input-group-text">Spring Bottom:</span>
+                <input id="sbo" type="number" class="form-control" step="1">
+            </div>
+            <div class="input-group mb-3 p-2">
+                <span class="input-group-text">Slack Down:</span>
+                <input id="sld" type="number" class="form-control" step="1">
+            </div>
+            <div class="input-group mb-3 p-2">
+                <span class="input-group-text">Jam Clear:</span>
+                <input id="jcl" type="number" class="form-control" step="1">
+            </div>
+            <div class="input-group mb-3 p-2">
+                <span class="input-group-text">Min Speed Up:</span>
+                <input id="smu" type="number" class="form-control" step="1">
+            </div>
+            <div class="input-group mb-3 p-2">
+                <span class="input-group-text">Down Timeout:</span>
+                <input id="smd" type="number" class="form-control" step="1">
+                <span class="input-group-text">Timed:</span>
+                <input id="pce" type="number" class="form-control" step="1">
+            </div>
+            <div class="input-group mb-3 p-2">
+                <span class="input-group-text">Move Sense:</span>
+                <input id="sms" type="number" class="form-control" step="1">
+            </div>
+            <div class="input-group mb-3 p-2">
+                <span class="input-group-text">Lift Ignore:</span>
+                <input id="jit" type="number" class="form-control" step="1">
+            </div>
+            <div class="input-group mb-3 p-2">
+                <span class="input-group-text">PIR Timeout:</span>
+                <input id="prt" type="number" class="form-control" step="1">
+                <span class="input-group-text">seconds</span>
+            </div>
+            <div class="input-group mb-3 p-2">
+                <span class="input-group-text">Bounce Time:</span>
+                <input id="bnt" type="number" class="form-control" step="1">
+                <span class="input-group-text">mS</span>
+            </div>
+            <div class="container p-2">
+                Beam Sensor: <button id="pho" type="button" onclick="set_param('pirtoggle')" class="btn btn-info"></button>
+            </div>
+            <div class="container p-2">
+                PIR Halts Close: <button id="hco" type="button" onclick="set_param('hco')" class="btn btn-info"></button>
+            </div>
+            <div class="container p-2">
+                Push to Close: <button id="pco" type="button" onclick="set_param('pco')" class="btn btn-info"></button>
+            </div>
+            <div class="container p-2">
+                Lift to Open: <button id="loo" type="button" onclick="set_param('loo')" class="btn btn-info"></button>
+            </div>
+            <div class="container text-center p-3">
+                <button type="button" class="btn btn-outline-submit" onclick="btn_submit()">Submit</button>
+            </div>
+
             <div class="container text-center">
                 <a href="index.html" class="btn btn-info" role="button">Runtime Data</a>
             </div>
         </div>
+        <script>
+            setInterval(getData, 1000);
+
+            function getData() {
+                let xhttp = new XMLHttpRequest();
+                xhttp.responseType = "json";
+                xhttp.onreadystatechange = function() {
+                    if (this.readyState === 4 && this.status === 200) {
+                        const val = xhttp.response;
+                        console.log(`Data: ${JSON.stringify(val)}`);
+                        Object.keys(val).forEach(function (_key) {
+                            let element = document.getElementById(_key);
+                            if (element.tagName == "span") {
+                                element.innerHTML = val[_key];
+                            } else {
+                                element.value = val[_key];
+                            }
+                        });
+                    }
+                };
+                xhttp.open("GET", "eepData", true);
+                xhttp.send();
+            }
+
+            function set_param(param){
+                let xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function() {
+                    if (this.readyState === 4 && this.status === 200) {
+                        getData();
+                    }
+                };
+                xhttp.open("GET", "/set?param=" + param, true);
+                xhttp.send();
+            }
+
+            function btn_submit(){
+                let xhr = new XMLHttpRequest();
+                xhr.open("POST", "/submit", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        getData();
+                    }
+                };
+                let data = {};
+                const keys = ["usp", "dsp", "sto", "sbo", "sld", "jcl", "smu", "smd", "sms", "jit", "prt", "bnt"];
+                keys.forEach(function (k, index) {
+                    data[k] = document.getElementById(k).value;
+                });
+                xhr.send(JSON.stringify(data));
+            }
+        </script>
     </body>
 </html>
