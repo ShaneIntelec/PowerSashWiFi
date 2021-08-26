@@ -26,6 +26,8 @@
                             let element = document.getElementById(_key);
                             if (element.tagName === "SPAN") {
                                 element.innerHTML = val[_key];
+                            } else if (element.tagName === 'BUTTON'){
+                                element.textContent = val[_key];
                             } else {
                                 element.value = val[_key];
                             }

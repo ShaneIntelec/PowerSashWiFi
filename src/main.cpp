@@ -183,9 +183,9 @@ void setup(void){
       case 2: root["prs"] = "Set Top"; break;
     }
 
-    root["pir"] = pir ? "<i class=\"fa fa-tag text-success\"></i>" : "";
-    root["aux"] = aux ? "<i class=\"fa fa-tag text-success\"></i>" : "";
-    root["unl"] = unl ? "<i class=\"fa fa-tag text-success\"></i>" : "";
+    root["pir"] = pir ? "<span class=\"text-success\">YES</span>" : "";
+    root["aux"] = aux ? "<span class=\"text-success\">YES</span>" : "";
+    root["unl"] = unl ? "<span class=\"text-success\">YES</span>" : "";
 
     root["pit"] = pit;
     root["usp"] = usp;
@@ -206,10 +206,8 @@ void setup(void){
     root["pco"] = pco ? "Enabled": "Disabled";
     root["loo"] = loo ? "Enabled": "Disabled";
     serializeJson(root, *response);
+    if (unl == 0) Serial2.print("!!!");  // auto unlock
     request->send(response);
-    if (unl == 0) {
-      Serial2.print("!!!");  // auto unlock
-    }
   });
 
   server.on("/set", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -228,6 +226,7 @@ void setup(void){
     } else if (p == "lower") {
       Serial2.print("<");
     }
+    if (unl == 0) Serial2.print("!!!");  // auto unlock
     request->send(200, "text/plain", "OK");
   });
 
@@ -279,6 +278,8 @@ void loop(void){
     handle_param("jit", jit, submitted_data["jit"], "j", "J");
     handle_param("prt", prt, submitted_data["prt"], "p", "P");
     handle_param("bnt", bnt, submitted_data["bnt"], "o", "O");
+    if (unl == 0) Serial2.print("!!!");  // auto unlock
+    delay(100);
   }
 
   while (Serial2.available()) {
